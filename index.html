@@ -112,7 +112,18 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
+        .pdf-page-break {
+            page-break-after: always;
+            display: none;
+        }
+        
         @media print {
+            .pdf-page-break {
+                display: block;
+                height: 0;
+                page-break-before: always;
+            }
+            
             body {
                 background-color: white;
                 padding: 0;
@@ -150,8 +161,8 @@
 <body>
     <a href="#" onclick="generatePDF()" class="download-btn" style="background-color: #2563eb;">Download PDF</a>
     
-    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden my-8 cv-container">
-        <div class="cv-header bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 sm:p-8" style="background: linear-gradient(to right, #2563eb, #3b82f6);">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg overflow-hidden my-8 cv-container">
+        <div class="cv-header text-white p-6 sm:p-8 print-color-adjust: exact;" style="background: #2563eb;">
             <h1 class="text-3xl font-bold mb-2">Emin Devrim Fidan</h1>
             <div class="flex flex-wrap gap-4 text-sm mt-4 contact-info">
                 <span class="flex items-center">Cambridge, United Kingdom</span>
@@ -217,6 +228,9 @@
                         <li>Developed user-friendly guides and visual workflows for administrative procedures, including residence permit applications and registrations with local authorities, improving efficiency and student understanding.</li>
                     </ul>
                 </div>
+                
+                <!-- Page Break for PDF -->
+                <div class="pdf-page-break"></div>
                 
                 <div class="mb-6">
                     <div class="job-title mb-1">
@@ -314,13 +328,11 @@
             
             <div class="mb-8">
                 <h2 class="section-title mb-4">LANGUAGES</h2>
-                <div class="flex flex-wrap gap-2">
-                    <span class="language-item">English</span>
-                    <span class="language-item">Turkish (Native)</span>
-                    <span class="language-item">Spanish (Conversational)</span>
-                    <span class="language-item">German (Conversational)</span>
-                </div>
+                <p class="text-sm text-gray-700">English, Turkish (Native), Spanish (Conversational), German (Conversational)</p>
             </div>
+            
+            <!-- Page Break for PDF -->
+            <div class="pdf-page-break"></div>
             
             <div class="mb-8">
                 <h2 class="section-title mb-4">RELEVANT SKILLS & ACHIEVEMENTS</h2>
@@ -407,6 +419,14 @@
             const downloadBtn = document.querySelector('.download-btn');
             downloadBtn.style.display = 'none';
             
+            // Respect page breaks
+            const pageBreakElements = document.querySelectorAll('.pdf-page-break');
+            pageBreakElements.forEach(el => {
+                el.style.display = 'block';
+                el.style.pageBreakBefore = 'always';
+                el.style.height = '1px';
+            });
+            
             // Get the container element
             const element = document.querySelector('.cv-container');
             
@@ -452,6 +472,11 @@
                 // Save the PDF
                 pdf.save('Emin_Devrim_Fidan_CV.pdf');
                 
+                // Reset page break elements
+                pageBreakElements.forEach(el => {
+                    el.style.display = 'none';
+                });
+                
                 // Clean up
                 document.body.removeChild(loadingMessage);
                 downloadBtn.style.display = 'block';
@@ -460,6 +485,11 @@
                 alert('PDF generation failed. Please try again.');
                 document.body.removeChild(loadingMessage);
                 downloadBtn.style.display = 'block';
+                
+                // Reset page break elements on error too
+                pageBreakElements.forEach(el => {
+                    el.style.display = 'none';
+                });
             });
         }
     </script>
