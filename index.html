@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, noarchive, nofollow, noimageindex">
     <title>Emin Devrim Fidan - CV</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
@@ -379,59 +381,85 @@
         </div>
     </div>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('CV page loaded successfully');
         });
         
         function generatePDF() {
-            // Get the CV container element
-            const element = document.querySelector('.cv-container');
-            
-            // Hide the download button temporarily for the PDF
+            // Show a loading message
+            const loadingMessage = document.createElement('div');
+            loadingMessage.innerHTML = 'Generating PDF, please wait...';
+            loadingMessage.style.position = 'fixed';
+            loadingMessage.style.top = '50%';
+            loadingMessage.style.left = '50%';
+            loadingMessage.style.transform = 'translate(-50%, -50%)';
+            loadingMessage.style.padding = '15px 20px';
+            loadingMessage.style.backgroundColor = '#2563eb';
+            loadingMessage.style.color = 'white';
+            loadingMessage.style.borderRadius = '5px';
+            loadingMessage.style.zIndex = '1000';
+            document.body.appendChild(loadingMessage);
+
+            // Hide the download button temporarily
             const downloadBtn = document.querySelector('.download-btn');
             downloadBtn.style.display = 'none';
             
-            // Configure the PDF options
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: 'Emin_Devrim_Fidan_CV.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    scrollY: 0, // Prevent scrolling issues
-                    windowWidth: document.documentElement.offsetWidth // Ensure proper width
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait',
-                    compress: true // Compress the PDF to save space
-                },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // Improve page breaks
-            };
+            // Get the container element
+            const element = document.querySelector('.cv-container');
             
-            // Create a temporary clone to modify for PDF generation
-            const tempElement = element.cloneNode(true);
-            document.body.appendChild(tempElement);
-            tempElement.style.display = 'block';
-            tempElement.style.position = 'absolute';
-            tempElement.style.left = '-9999px';
+            // Used for PDF dimensions (A4)
+            const a4Width = 210; // mm
+            const a4Height = 297; // mm
             
-            // Generate the PDF
-            html2pdf().set(opt).from(tempElement).save().then(function() {
-                // Show the download button again after PDF is generated
-                downloadBtn.style.display = 'block';
-                // Remove the temporary element
-                document.body.removeChild(tempElement);
-            }).catch(function(error) {
-                console.error('Error generating PDF:', error);
-                downloadBtn.style.display = 'block';
-                if (tempElement.parentNode) {
-                    document.body.removeChild(tempElement);
+            // Create a direct, simpler approach with html2canvas and jsPDF
+            html2canvas(element, {
+                scale: 2, // Higher scale for better quality
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Calculate dimensions to fit A4
+                const imgWidth = a4Width;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                // Add image to PDF, handling multi-page if needed
+                let heightLeft = imgHeight;
+                let position = 0;
+                let pageNumber = 1;
+                
+                // First page
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                heightLeft -= a4Height;
+                
+                // Add more pages if content overflows
+                while (heightLeft > 0) {
+                    position = -a4Height * pageNumber;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= a4Height;
+                    pageNumber++;
                 }
+                
+                // Save the PDF
+                pdf.save('Emin_Devrim_Fidan_CV.pdf');
+                
+                // Clean up
+                document.body.removeChild(loadingMessage);
+                downloadBtn.style.display = 'block';
+            }).catch(error => {
+                console.error('Error generating PDF:', error);
+                alert('PDF generation failed. Please try again.');
+                document.body.removeChild(loadingMessage);
+                downloadBtn.style.display = 'block';
             });
         }
     </script>
